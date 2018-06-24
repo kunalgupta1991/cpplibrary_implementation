@@ -1,0 +1,113 @@
+#include<iostream>
+#include<memory>
+#include<algorithm>
+#include<queue>
+template<class T>
+struct deleter
+{
+static	void release(T*p)
+	{
+		cout << "deleter release called";
+		delete p;
+	}
+void operator()(T * p)
+		{
+			cout << "deleter called";
+			delete p;
+		}
+};
+template<class T>
+struct deleter1
+{
+	static	void release(T*p)
+	{
+		cout << "deleter1 called";
+		delete p;
+	}
+	void operator()(T * p)
+	{
+		cout << "deleter123 called";
+		delete p;
+	}
+};
+
+using namespace std;
+template<class T, class d = deleter<T>>
+class mySmartPointer
+{
+private: 
+	T* ptr;
+	d deleter;
+	//typedef d deleter;
+
+public:
+	explicit mySmartPointer(T * p) :ptr(p)
+	{
+
+	}
+	mySmartPointer()
+	{
+
+	}
+	mySmartPointer(const mySmartPointer & t) = delete;
+	mySmartPointer& operator =(const mySmartPointer&) = delete;
+	mySmartPointer & operator =(mySmartPointer && right)
+	{
+		//reset(right.ptr);
+
+	}
+	mySmartPointer(T * p, d _delter) :ptr(p), deleter(_delter)
+	{
+		cout << "my shared ptr";
+	}
+	mySmartPointer(mySmartPointer && t)
+	{
+
+	}
+	mySmartPointer & operator =(nullptr_t)
+	{
+
+	}
+	T* get()
+	{
+		return ptr;
+	}
+	T* operator->()
+	{
+		return ptr;
+	}
+	T& operator*()
+	{
+		return *ptr;
+	}
+	~mySmartPointer()
+	{
+		//using d::operator()(T*)
+		deleter(ptr);
+	}
+	void  reset(T * p = NULL)
+	{
+		T* old = get();
+		ptr = p;
+		if (old != p)
+			deleter(old);
+	}
+
+};
+
+int main()
+{
+
+   // return 0;
+	auto f = [](int * p) {delete p;  };
+	mySmartPointer<int, decltype(f)> t5(new int(5), f);
+	t5.reset();
+
+	mySmartPointer<int,deleter1<int>> t1(new int(6));
+	t1.reset(new int(5));
+	{
+		unique_ptr<int, deleter<int>> t2(new int(5));
+	}
+	
+	unique_ptr<int, decltype(f)> t(new int(5),f);
+}

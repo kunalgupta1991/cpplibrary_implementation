@@ -1,0 +1,115 @@
+#include"stdafx.h"
+#include<iostream>
+using namespace std;
+
+void funsh(int* ptr)
+{
+	std::cout << "vijay";
+	delete ptr;
+}
+class sh_ptr_base
+{
+public:
+	sh_ptr_base() :ref_size(1) {}
+	void increment()
+	{
+		ref_size++;
+	}
+	void decrement()
+	{
+		ref_size--;
+		if (ref_size == 0)
+		{
+			destroy();
+		}
+	}
+
+	virtual void destroy() = 0;
+	virtual ~sh_ptr_base() {}
+private:
+	std::size_t ref_size;
+
+};
+template<typename Tx>
+class sh_ptr_default_deleter :public sh_ptr_base
+{
+public:
+	sh_ptr_default_deleter(Tx* ptr) :m_ptr(ptr) {}
+private:
+	virtual void destroy()
+	{
+		std::cout << "In default deleter";
+		if (m_ptr != nullptr)
+			delete m_ptr;
+	}
+	Tx* m_ptr;
+};
+template<typename Tx, typename Dx>
+class sh_ptr_custom_deleter :public sh_ptr_base
+{
+public:
+	sh_ptr_custom_deleter(Tx* ptr, Dx dx) :m_ptr(ptr), m_dx(dx) {}
+private:
+	virtual void destroy()
+	{
+		if (m_ptr != nullptr)
+			m_dx(m_ptr);
+	}
+	Tx* m_ptr;
+	Dx m_dx;
+};
+template<typename Tx>
+class sh_ptr
+{
+public:
+	using shptr = sh_ptr<Tx>;
+	sh_ptr(std::nullptr_t) :m_ptr(nullptr), ref_count(nullptr) {};
+	sh_ptr(Tx* ptr) :m_ptr(ptr), ref_count(new sh_ptr_default_deleter<Tx>(ptr))
+	{
+
+	}
+	template<typename Dx>
+	sh_ptr(Tx* ptr, Dx dx) : m_ptr(ptr), ref_count(new sh_ptr_custom_deleter<Tx, Dx>(ptr, dx))
+	{
+
+	}
+	sh_ptr(const sh_ptr& rhs) :m_ptr(rhs.m_ptr), ref_count(rhs.ref_count) {}
+
+	sh_ptr(sh_ptr&& rhs) :m_ptr(rhs.m_ptr), ref_count(rhs.ref_count) {
+		rhs.m_ptr = nullptr;
+
+	}
+	sh_ptr& operator=(const sh_ptr& rhs) {
+		if (this == &rhs)
+			return *this;
+		m_ptr = rhs.m_ptr;
+		ref_count = rhs.ref_count;
+		ref_count->increment();
+		return *this;
+	}
+	sh_ptr& operator=(sh_ptr&& rhs) {
+		if (this == &rhs)
+			return *this;
+		m_ptr = rhs.m_ptr;
+		ref_count = rhs.ref_count;
+		rhs.m_ptr = nullptr;
+		rhs.ref_count = nullptr;
+		return *this;
+	}
+	Tx& operator*()
+	{
+		return *m_ptr;
+	}
+	Tx* operator->()
+	{
+		return m_ptr;
+	}
+	~sh_ptr()
+	{
+		if (ref_count != nullptr)
+			ref_count->decrement();
+	}
+private:
+	Tx* m_ptr;
+	sh_ptr_base* ref_count;
+};

@@ -1,0 +1,66 @@
+#include"stdafx.h"
+#include<iostream>
+#include<vector>
+using namespace std;
+template <class T>
+class Myvector
+{
+	typedef Myvector<T> myt;
+	T* ptr;
+	int size;
+	int capacity;
+
+public:
+	
+	Myvector(initializer_list<T> t)
+	{
+		ptr = new T[t.size()];
+		for (int i = 0; i < t.size(); i++)
+			ptr[i] = t[i];
+		size = t.size();
+		capacity = t.size();
+	}
+	Myvector(size_t n = 5)
+	{
+		ptr = new T[n];
+		size(n);
+		capacity(n);
+
+	}
+	Myvector(const Myvector & mt)
+	{
+		size = mt.size;
+		capacity = mt.capacity;
+	    
+		ptr = new T[size];
+		for (int i = 0; i < size; i++)
+			ptr[i] = mt.ptr[i];
+	}
+	Myvector( Myvector&& mt)
+	{
+		size = mt.size;
+		capacity = mt.capacity;
+		ptr = mt.ptr;
+		mt.ptr = NULL;
+		mt.size = 0;
+		mt.capacity = 0;
+	}
+	Myvector(size_t _size, const T& initial_value) : Myvector(_size)
+	{
+		for (int i = 0; i < size; i++)
+			ptr[i] = initial_value;
+	}
+	Myvector & operator = (const Myvector & t)
+	{
+		if (this == &t)
+			return *this;
+		T* old = ptr;
+		ptr = new T[t.capacity];
+		for (int i = 0; i < t.size; i++)
+			ptr[i] = t.ptr[i];
+		size = t.size;
+		delete[]old;
+		return *this;
+
+	}
+};
